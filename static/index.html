@@ -5,131 +5,211 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Glosor</title>
 <style>
+  /* Apple-style system palette: grouped background, solid cards, one accent. */
   :root {
-    --bg1:#fdf2e9; --bg2:#e8f0ff; --card:#ffffff; --ink:#1f2a44; --muted:#6b7694;
-    --accent:#5b5bf0; --accent2:#8b5cf6; --ok:#15a34a; --ok-bg:#e8f9ee;
-    --bad:#e2650f; --bad-bg:#fff1e6; --line:#dfe4f2; --shadow:0 10px 30px rgba(60,70,140,.14);
+    --bg:#f2f2f7; --card:#ffffff; --fill:#f2f2f7; --ink:#1c1c1e; --muted:#6e6e73; --line:#e5e5ea;
+    --accent:#5856d6; --accent-fill:#5856d6; --accent-tint:rgba(88,86,214,.12); --on-accent:#fff;
+    --ok:#248a3d; --ok-bg:#e3f6e8; --bad:#c93400; --bad-bg:#fff0e5; --danger:#d70015;
+    --bar:rgba(242,242,247,.72); --shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+    --ease:cubic-bezier(.22,1,.36,1); /* close to a critically damped spring: no overshoot */
+    color-scheme:light dark;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg1:#171a2e; --bg2:#1f1b3a; --card:#242a47; --ink:#eef1ff; --muted:#a3acd0;
-      --ok-bg:#16382a; --bad-bg:#3d2a1a; --line:#38406a; --shadow:0 10px 30px rgba(0,0,0,.35); }
+    :root { --bg:#000; --card:#1c1c1e; --fill:#2c2c2e; --ink:#f5f5f7; --muted:#98989d; --line:#38383a;
+      --accent:#a5a3ff; --accent-fill:#5e5ce6; --accent-tint:rgba(125,122,255,.18);
+      --ok:#30d158; --ok-bg:#0f2e1a; --bad:#ff9f0a; --bad-bg:#33240a; --danger:#ff453a;
+      --bar:rgba(0,0,0,.6); --shadow:none; }
   }
   * { box-sizing:border-box; }
-  body { margin:0; min-height:100vh; font-family:"Nunito","Segoe UI",system-ui,sans-serif; color:var(--ink);
-    background:linear-gradient(135deg,var(--bg1),var(--bg2)) fixed; }
-  main { max-width:660px; margin:0 auto; padding:28px 16px 48px; }
-  h1 { text-align:center; font-size:2.6rem; margin:0 0 20px; letter-spacing:.5px;
-    background:linear-gradient(90deg,var(--accent),var(--accent2),#ec4899); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  h2 { margin:0 0 12px; }
-  .card { background:var(--card); border-radius:24px; padding:28px; box-shadow:var(--shadow); margin-bottom:18px;
-    animation:rise .35s ease-out; }
-  @keyframes rise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
-  button { font:inherit; font-size:1.1rem; font-weight:700; padding:12px 22px; border:0; border-radius:14px; cursor:pointer;
-    color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent2)); margin:4px 6px 4px 0;
-    box-shadow:0 4px 12px rgba(91,91,240,.35); transition:transform .12s, box-shadow .12s, filter .12s; }
-  button:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 18px rgba(91,91,240,.4); }
-  button:active:not(:disabled) { transform:translateY(0); }
-  button:disabled { opacity:.45; cursor:not-allowed; box-shadow:none; }
-  button.secondary { background:var(--bg2); color:var(--ink); box-shadow:none; border:2px solid var(--line); }
-  button.danger { background:linear-gradient(135deg,#ef4444,#dc2626); box-shadow:0 4px 12px rgba(220,38,38,.3); }
-  button:focus-visible, input:focus-visible { outline:3px solid var(--accent2); outline-offset:2px; }
-  input[type=text], select { font:inherit; font-size:1.25rem; padding:12px 14px; border:2px solid var(--line); border-radius:14px;
-    width:100%; background:var(--card); color:var(--ink); transition:border-color .15s, box-shadow .15s; }
-  input[type=text]:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(91,91,240,.18); outline:none; }
-  label { font-weight:700; color:var(--muted); }
-  .word { font-size:3rem; text-align:center; margin:14px 0 22px; font-weight:800; padding:22px 12px;
-    border-radius:20px; background:linear-gradient(135deg,rgba(91,91,240,.10),rgba(236,72,153,.10)); }
-  .hint { text-align:center; color:var(--muted); font-weight:600; }
-  #answer { text-align:center; font-size:1.6rem; }
-  .feedback { min-height:3.4em; font-size:1.25rem; font-weight:700; text-align:center; margin:14px 0; padding:10px 14px; border-radius:14px; }
-  .feedback.ok { color:var(--ok); background:var(--ok-bg); animation:pop .35s ease-out; }
+  html { -webkit-text-size-adjust:100%; }
+  body { margin:0; min-height:100vh; color:var(--ink); background:var(--bg);
+    font:100%/1.5 ui-rounded, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing:antialiased; }
+
+  /* Translucent top bar: content scrolls underneath it. */
+  .topbar { position:sticky; top:0; z-index:10; padding:.75rem 1rem; text-align:center;
+    background:var(--bar); -webkit-backdrop-filter:blur(20px) saturate(180%); backdrop-filter:blur(20px) saturate(180%); }
+  .topbar h1 { margin:0; font-size:1.0625rem; font-weight:600; letter-spacing:-.01em; line-height:1.3; }
+  main { max-width:40rem; margin:0 auto; padding:1rem 1rem 3rem; }
+
+  h2 { margin:0 0 .25rem; font-size:1.75rem; font-weight:700; line-height:1.15; letter-spacing:-.02em; }
+  .sub { margin:0 0 1.25rem; color:var(--muted); }
+  .card { background:var(--card); border-radius:1.25rem; padding:1.5rem; box-shadow:var(--shadow); }
+
+  /* Screens enter along the direction you travel: forward from the right, back from the left. */
+  .card.enter-fwd { animation:in-fwd .35s var(--ease); }
+  .card.enter-back { animation:in-back .35s var(--ease); }
+  @keyframes in-fwd { from { opacity:0; transform:translateX(1.5rem); } }
+  @keyframes in-back { from { opacity:0; transform:translateX(-1.5rem); } }
+
+  /* Buttons: feedback on press, instantly. */
+  button { font:inherit; font-size:1.0625rem; font-weight:600; min-height:2.75rem; padding:.625rem 1.25rem;
+    border:0; border-radius:.75rem; cursor:pointer; color:var(--on-accent); background:var(--accent-fill);
+    touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+    transition:transform .1s ease-out, filter .15s, opacity .15s; }
+  button:active:not(:disabled) { transform:scale(.97); filter:brightness(.92); }
+  @media (hover:hover) { button:hover:not(:disabled) { filter:brightness(1.08); } }
+  button:disabled { opacity:.35; cursor:default; }
+  button.secondary { background:var(--accent-tint); color:var(--accent); }
+  button.danger { background:transparent; color:var(--danger); }
+  button.link { min-height:0; padding:.25rem 0; background:none; color:var(--muted); font-size:.875rem; font-weight:500; }
+  button.icon { min-height:2.25rem; width:2.25rem; padding:0; border-radius:50%; background:var(--fill); color:var(--muted); }
+  button:focus-visible, input:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  .actions { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1.25rem; }
+  .actions.fill > * { flex:1 1 10rem; }
+  .actions .push { margin-left:auto; }
+
+  input[type=text] { font:inherit; font-size:1.0625rem; padding:.7rem .875rem; width:100%; border:1px solid var(--line);
+    border-radius:.75rem; background:var(--fill); color:var(--ink); transition:border-color .15s, box-shadow .15s; }
+  input[type=text]:focus { border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-tint); outline:none; }
+  input[type=text][aria-invalid=true] { border-color:var(--danger); }
+  .field { display:block; font-size:.875rem; font-weight:600; color:var(--muted); margin-bottom:1rem; }
+  .field input { margin-top:.375rem; }
+  .error { color:var(--danger); font-size:.875rem; font-weight:500; margin-top:.375rem; }
+
+  /* Grouped list (like iOS Settings): one rounded container, hairline separators. */
+  .group { background:var(--fill); border-radius:.875rem; overflow:hidden; }
+  .choice { display:flex; align-items:center; gap:.75rem; padding:.875rem 1rem; font-size:1.0625rem; font-weight:500;
+    cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; transition:background .15s; }
+  .choice + .choice { border-top:1px solid var(--line); }
+  .choice:active { background:var(--line); }
+  .choice:has(input:checked) { background:var(--accent-tint); }
+  .choice input { width:1.375rem; height:1.375rem; margin:0; accent-color:var(--accent); flex:none; }
+  .choice .count { margin-left:auto; color:var(--muted); font-weight:400; font-size:.9375rem; }
+  .empty { padding:1rem; color:var(--muted); text-align:center; }
+
+  /* Edit */
+  .cols { display:grid; grid-template-columns:1fr 1fr 2.25rem; gap:.5rem; align-items:center; }
+  .cols.head { font-size:.8125rem; font-weight:600; letter-spacing:.02em; text-transform:uppercase; color:var(--muted);
+    margin-bottom:.375rem; padding:0 .25rem; }
+  #editRows .cols { margin-bottom:.5rem; }
+  .sticky-actions { position:sticky; bottom:0; margin:1.25rem -1.5rem -1.5rem; padding:.875rem 1.5rem;
+    border-radius:0 0 1.25rem 1.25rem; background:color-mix(in srgb, var(--card) 78%, transparent);
+    -webkit-backdrop-filter:blur(20px) saturate(180%); backdrop-filter:blur(20px) saturate(180%); }
+  .sticky-actions .actions { margin:0; }
+
+  /* Quiz */
+  .bar { height:.375rem; border-radius:99px; background:var(--fill); overflow:hidden; }
+  .bar > div { height:100%; background:var(--ok); border-radius:99px; transform:scaleX(0); transform-origin:left;
+    transition:transform .5s var(--ease); }
+  .progress { display:flex; justify-content:space-between; align-items:center; margin:.5rem 0 1.5rem; font-size:.875rem; color:var(--muted);
+    font-variant-numeric:tabular-nums; }
+  .prompt { text-align:center; color:var(--muted); font-weight:500; margin:0; }
+  .word { font-size:clamp(2.25rem, 9vw, 3.25rem); font-weight:700; line-height:1.1; letter-spacing:-.025em;
+    text-align:center; margin:.5rem 0 1.5rem; overflow-wrap:anywhere; }
+  .word.next { animation:in-fwd .35s var(--ease); }
+  #answer { text-align:center; font-size:1.5rem; font-weight:500; padding:.875rem 1rem; }
+  .feedback { min-height:4.5rem; display:flex; flex-direction:column; justify-content:center; text-align:center;
+    margin:1rem 0; padding:.75rem 1rem; border-radius:.875rem; font-weight:600; line-height:1.35; text-wrap:balance; }
+  .feedback .answer { font-weight:700; font-size:1.25rem; margin-top:.125rem; }
+  .feedback.ok { color:var(--ok); background:var(--ok-bg); animation:settle .3s var(--ease); }
   .feedback.bad { color:var(--bad); background:var(--bad-bg); animation:shake .4s ease-out; }
-  @keyframes pop { 0% { transform:scale(.9); } 60% { transform:scale(1.04); } 100% { transform:scale(1); } }
-  @keyframes shake { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-6px); } 50% { transform:translateX(6px); } 75% { transform:translateX(-3px); } }
-  .bar { background:var(--line); border-radius:99px; height:18px; overflow:hidden; margin-bottom:8px; }
-  .bar > div { background:linear-gradient(90deg,#34d399,var(--ok)); height:100%; width:0; border-radius:99px; transition:width .4s ease; }
-  table { width:100%; border-collapse:collapse; } td { padding:5px 4px; }
-  #summaryText { text-align:center; font-weight:800; }
-  #summary ul { list-style:none; padding:0; margin:16px 0; }
-  #summary li { padding:9px 14px; margin:6px 0; border-radius:12px; font-weight:600; }
-  li.miss { color:var(--bad); background:var(--bad-bg); } li.hit { color:var(--ok); background:var(--ok-bg); }
-  .row { display:flex; gap:8px; flex-wrap:wrap; }
-  .row > * { flex:1; }
-  .choice { display:flex; align-items:center; gap:12px; font-size:1.15rem; font-weight:700; color:var(--ink); padding:12px 14px;
-    margin:8px 0; border:2px solid var(--line); border-radius:14px; cursor:pointer; transition:border-color .15s, background .15s; }
-  .choice:hover { border-color:var(--accent); }
-  .choice:has(input:checked) { border-color:var(--accent); background:rgba(91,91,240,.10); }
-  .choice input { width:1.4em; height:1.4em; accent-color:var(--accent); }
-  @media (max-width:480px) { .word { font-size:2.3rem; } h1 { font-size:2.1rem; } .card { padding:20px; } }
-  @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
+  @keyframes settle { from { opacity:0; transform:scale(.96); } }
+  @keyframes shake { 25% { transform:translateX(-6px); } 50% { transform:translateX(5px); } 75% { transform:translateX(-2px); } }
+
+  /* Summary */
+  #summary h2 { text-align:center; }
+  .score { text-align:center; margin:.5rem 0 1.5rem; }
+  .score b { display:block; font-size:3.5rem; font-weight:700; line-height:1; letter-spacing:-.03em;
+    font-variant-numeric:tabular-nums; }
+  .score span { color:var(--muted); }
+  .results { list-style:none; padding:0; margin:0; }
+  .results li { display:flex; gap:.75rem; padding:.75rem 1rem; }
+  .results li + li { border-top:1px solid var(--line); }
+  .results .mark { font-weight:700; flex:none; }
+  .results .hit .mark { color:var(--ok); } .results .miss .mark { color:var(--bad); }
+  .results .miss .right { font-weight:700; }
+
+  /* Reduced motion: keep the feedback, swap movement for a gentle fade. */
+  @media (prefers-reduced-motion: reduce) {
+    .card.enter-fwd, .card.enter-back, .word.next, .feedback.ok, .feedback.bad { animation:fade .2s ease; }
+    @keyframes fade { from { opacity:0; } }
+    button, .bar > div { transition:none; }
+    button:active:not(:disabled) { transform:none; }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .topbar { background:var(--bg); backdrop-filter:none; -webkit-backdrop-filter:none; }
+    .sticky-actions { background:var(--card); backdrop-filter:none; -webkit-backdrop-filter:none; }
+  }
+  @media (prefers-contrast: more) {
+    :root { --muted:var(--ink); --line:#8e8e93; }
+    .card, .group, button.secondary { outline:1px solid var(--line); }
+  }
+  @media (max-width:30rem) { .card { padding:1.25rem; } .sticky-actions { margin:1.25rem -1.25rem -1.25rem; padding:.875rem 1.25rem; } }
   [hidden] { display:none !important; }
 </style>
 </head>
 <body>
+<header class="topbar"><h1>📚 Glosor</h1></header>
 <main>
-  <h1>📚 Glosor</h1>
-
   <!-- Startsida -->
   <section id="home" class="card">
-    <h2>Välj gloslista</h2>
-    <div class="hint" style="text-align:left">Bocka i flera listor för att öva på dem tillsammans.</div>
-    <div id="listChoices"></div>
-    <p>
+    <h2>Gloslistor</h2>
+    <p class="sub">Bocka i en eller flera listor att öva på.</p>
+    <div id="listChoices" class="group"></div>
+    <div class="actions">
       <button id="btnPractice">Öva</button>
       <button id="btnEdit" class="secondary">Redigera</button>
-      <button id="btnNew" class="secondary">Ny lista</button>
-    </p>
+      <button id="btnNew" class="secondary push">+ Ny lista</button>
+    </div>
   </section>
 
   <!-- Redigera lista -->
   <section id="edit" class="card" hidden>
     <h2 id="editTitle">Redigera lista</h2>
-    <label>Namn på listan<input type="text" id="editName"></label>
-    <table><thead><tr><td><b>Svenska</b></td><td><b>Engelska</b></td><td></td></tr></thead>
-      <tbody id="editRows"></tbody></table>
-    <p>
-      <button id="btnAddRow" class="secondary">+ Lägg till ord</button>
-    </p>
-    <p>
-      <button id="btnSave">Spara</button>
-      <button id="btnCancelEdit" class="secondary">Avbryt</button>
-      <button id="btnDelete" class="danger">Ta bort lista</button>
-    </p>
+    <p class="sub">Tomma rader hoppas över när du sparar.</p>
+    <label class="field">Namn på listan
+      <input type="text" id="editName" aria-describedby="nameError">
+      <div class="error" id="nameError" hidden>Ge listan ett namn.</div>
+    </label>
+    <div class="cols head"><span>Svenska</span><span>Engelska</span><span></span></div>
+    <div id="editRows"></div>
+    <button id="btnAddRow" class="secondary">+ Lägg till ord</button>
+    <div class="sticky-actions">
+      <div class="actions">
+        <button id="btnSave">Spara</button>
+        <button id="btnCancelEdit" class="secondary">Avbryt</button>
+        <button id="btnDelete" class="danger push">Ta bort lista</button>
+      </div>
+    </div>
   </section>
 
   <!-- Välj övning -->
   <section id="mode" class="card" hidden>
     <h2>Vad vill du öva?</h2>
-    <p>
+    <p class="sub">Välj åt vilket håll du vill översätta.</p>
+    <div class="actions fill">
       <button id="btnSvEn">Svenska → Engelska</button>
       <button id="btnEnSv">Engelska → Svenska</button>
-    </p>
-    <button id="btnModeBack" class="secondary">Tillbaka</button>
+    </div>
+    <div class="actions"><button id="btnModeBack" class="secondary">Tillbaka</button></div>
   </section>
 
   <!-- Övning -->
   <section id="quiz" class="card" hidden>
-    <div class="bar"><div id="barFill"></div></div>
-    <div class="hint" id="progressText"></div>
-    <div class="hint" id="promptLabel"></div>
-    <div class="word" id="promptWord"></div>
-    <input type="text" id="answer" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <div class="feedback" id="feedback"></div>
-    <div class="row">
+    <div class="bar" role="progressbar" aria-label="Klara ord" aria-valuemin="0" aria-valuemax="100" id="bar"><div id="barFill"></div></div>
+    <div class="progress"><span id="progressText"></span><button id="btnQuit" class="link">Avsluta</button></div>
+    <p class="prompt" id="promptLabel"></p>
+    <div class="word" id="promptWord" lang="sv"></div>
+    <input type="text" id="answer" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+      aria-label="Ditt svar" aria-describedby="feedback">
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    <div class="actions fill">
       <button id="btnCheck">Svara</button>
-      <button id="btnNext" hidden>Nästa</button>
+      <button id="btnNext" hidden>Nästa →</button>
       <button id="btnReveal" class="secondary">Visa svar</button>
     </div>
-    <button id="btnQuit" class="secondary">Avsluta</button>
   </section>
 
   <!-- Sammanfattning -->
   <section id="summary" class="card" hidden>
     <h2>Bra jobbat! 🎉</h2>
-    <p id="summaryText" style="font-size:1.3rem"></p>
-    <ul id="summaryList"></ul>
-    <button id="btnRetryMissed">Öva på missade ord</button>
-    <button id="btnNewSession" class="secondary">Ny övning</button>
+    <div class="score"><b id="summaryScore"></b><span>rätt på första försöket</span></div>
+    <ul id="summaryList" class="results group"></ul>
+    <div class="actions fill">
+      <button id="btnRetryMissed">Öva på missade ord</button>
+      <button id="btnNewSession" class="secondary">Öva igen</button>
+    </div>
+    <div class="actions"><button id="btnHome" class="secondary">Tillbaka till listorna</button></div>
   </section>
 </main>
 
@@ -137,7 +217,20 @@
 "use strict";
 const $ = id => document.getElementById(id);
 const screens = ["home", "edit", "mode", "quiz", "summary"];
-function show(name) { screens.forEach(s => $(s).hidden = s !== name); }
+// Depth in the app's hierarchy: going deeper enters from the right, going back from the left.
+const DEPTH = { home: 0, edit: 1, mode: 1, quiz: 2, summary: 3 };
+let shown = "home";
+function show(name, dir) {
+  dir = dir || (DEPTH[name] >= DEPTH[shown] ? "fwd" : "back");
+  screens.forEach(s => $(s).hidden = s !== name);
+  const card = $(name);
+  card.classList.remove("enter-fwd", "enter-back");
+  if (name !== shown) { void card.offsetWidth; card.classList.add("enter-" + dir); }
+  shown = name;
+  window.scrollTo(0, 0);
+}
+// Same-frame haptic for answer feedback on devices that support it.
+const buzz = pattern => { try { navigator.vibrate && navigator.vibrate(pattern); } catch (e) {} };
 
 let lists = [];
 let editing = null;      // list being edited (null = new)
@@ -163,13 +256,16 @@ async function loadLists(selectId) {
   if (selectId) { prev.clear(); prev.add(selectId); }
   if (!selectId && !prev.size && lists.length) prev.add(lists[0].id);
   box.textContent = "";
+  if (!lists.length) box.innerHTML = '<div class="empty">Inga listor än – skapa en med “Ny lista”.</div>';
   lists.forEach(l => {
     const label = document.createElement("label");
     label.className = "choice";
     const cb = document.createElement("input");
     cb.type = "checkbox"; cb.value = l.id; cb.checked = prev.has(l.id);
     cb.onchange = updateHomeButtons;
-    label.append(cb, `${l.name} (${l.words.length} ord)`);
+    const count = document.createElement("span");
+    count.className = "count"; count.textContent = `${l.words.length} ord`;
+    label.append(cb, l.name, count);
     box.appendChild(label);
   });
   updateHomeButtons();
@@ -187,39 +283,45 @@ function updateHomeButtons() {
 
 // ---------- Redigera ----------
 function addRow(sv = "", en = "") {
-  const tr = document.createElement("tr");
-  for (const v of [sv, en]) {
-    const td = document.createElement("td");
+  const row = document.createElement("div");
+  row.className = "cols";
+  [[sv, "Svenska", "sv"], [en, "Engelska", "en"]].forEach(([v, label, lang]) => {
     const inp = document.createElement("input");
-    inp.type = "text"; inp.value = v;
-    td.appendChild(inp); tr.appendChild(td);
-  }
-  const td = document.createElement("td");
+    inp.type = "text"; inp.value = v; inp.lang = lang; inp.setAttribute("aria-label", label);
+    row.appendChild(inp);
+  });
   const del = document.createElement("button");
-  del.className = "secondary"; del.textContent = "✕"; del.title = "Ta bort ord";
-  del.onclick = () => tr.remove();
-  td.appendChild(del); tr.appendChild(td);
-  $("editRows").appendChild(tr);
-  return tr;
+  del.className = "icon"; del.textContent = "✕"; del.title = "Ta bort ord";
+  del.setAttribute("aria-label", "Ta bort ord");
+  del.onclick = () => row.remove();
+  row.appendChild(del);
+  $("editRows").appendChild(row);
+  return row;
 }
 function openEdit(list) {
   editing = list;
   $("editTitle").textContent = list ? "Redigera lista" : "Ny lista";
   $("editName").value = list ? list.name : "";
+  setNameError(false);
   $("editRows").textContent = "";
   (list ? list.words : [{}, {}, {}]).forEach(w => addRow(w.sv, w.en));
   $("btnDelete").hidden = !list;
   show("edit");
 }
+function setNameError(on) {
+  $("nameError").hidden = !on;
+  $("editName").setAttribute("aria-invalid", on);
+}
+$("editName").addEventListener("input", () => setNameError(false));
 $("btnAddRow").onclick = () => addRow().querySelector("input").focus();
 $("btnNew").onclick = () => openEdit(null);
 $("btnEdit").onclick = () => openEdit(checkedLists()[0]);
 $("btnCancelEdit").onclick = () => show("home");
 $("btnSave").onclick = async () => {
   const name = $("editName").value.trim();
-  if (!name) { $("editName").focus(); return; }
-  const words = [...$("editRows").querySelectorAll("tr")].map(tr => {
-    const [sv, en] = tr.querySelectorAll("input");
+  if (!name) { setNameError(true); $("editName").focus(); return; }
+  const words = [...$("editRows").children].map(row => {
+    const [sv, en] = row.querySelectorAll("input");
     return { sv: sv.value, en: en.value };
   });
   const body = JSON.stringify({ name, words });
@@ -280,7 +382,7 @@ function startSession(words, dir) {
     all: [], total: words.length, mastered: 0, current: null, answered: false,
   };
   session.all = session.queue.slice();
-  show("quiz");
+  show("quiz", "fwd"); // a new round always moves forward, even from the summary
   nextWord();
 }
 
@@ -296,7 +398,8 @@ function isCorrect(input, expected) {
 }
 
 function updateProgress() {
-  $("barFill").style.width = (100 * session.mastered / session.total) + "%";
+  $("barFill").style.transform = `scaleX(${session.mastered / session.total})`;
+  $("bar").setAttribute("aria-valuenow", Math.round(100 * session.mastered / session.total));
   $("progressText").textContent = `${session.mastered} av ${session.total} ord klara`;
 }
 
@@ -305,7 +408,10 @@ function nextWord() {
   session.current = session.queue[0];
   session.answered = false;
   $("promptLabel").textContent = direction === "sv-en" ? "Vad heter detta på engelska?" : "Vad heter detta på svenska?";
-  $("promptWord").textContent = question(session.current.word);
+  const word = $("promptWord");
+  word.textContent = question(session.current.word);
+  word.lang = direction === "sv-en" ? "sv" : "en";
+  word.classList.remove("next"); void word.offsetWidth; word.classList.add("next");
   $("answer").value = ""; $("answer").disabled = false;
   $("feedback").textContent = ""; $("feedback").className = "feedback";
   $("btnCheck").hidden = false; $("btnReveal").hidden = false; $("btnNext").hidden = true;
@@ -335,15 +441,26 @@ function check() {
   if (isCorrect($("answer").value, answerOf(item.word))) {
     firstAttempt(item, true);
     s.queue.shift(); s.mastered++;
-    $("feedback").className = "feedback ok";
-    $("feedback").textContent = pick(CORRECT_MSGS);
+    setFeedback("ok", pick(CORRECT_MSGS));
+    buzz(15);
   } else {
     firstAttempt(item, false);
     requeue(item);
-    $("feedback").className = "feedback bad";
-    $("feedback").textContent = `${pick(WRONG_MSGS)} Rätt stavning: ${answerOf(item.word)}`;
+    setFeedback("bad", pick(WRONG_MSGS), `Rätt stavning: ${answerOf(item.word)}`);
+    buzz([30, 40, 30]);
   }
   afterAnswer();
+}
+
+function setFeedback(kind, message, answer) {
+  const fb = $("feedback");
+  fb.className = "feedback"; void fb.offsetWidth; fb.className = "feedback " + kind;
+  fb.textContent = message;
+  if (answer) {
+    const a = document.createElement("div");
+    a.className = "answer"; a.textContent = answer;
+    fb.appendChild(a);
+  }
 }
 
 function reveal() {
@@ -351,8 +468,7 @@ function reveal() {
   if (session.answered) return;
   firstAttempt(item, false);
   requeue(item);
-  $("feedback").className = "feedback bad";
-  $("feedback").textContent = `${pick(REVEAL_MSGS)} Svar: ${answerOf(item.word)}`;
+  setFeedback("bad", pick(REVEAL_MSGS), `Svar: ${answerOf(item.word)}`);
   afterAnswer();
 }
 
@@ -373,14 +489,20 @@ $("answer").addEventListener("keydown", e => { if (e.key === "Enter") check(); }
 // ---------- Sammanfattning ----------
 function finish() {
   const hits = session.all.filter(i => i.firstTry).length;
-  $("summaryText").textContent = `Du hade ${hits} av ${session.total} rätt på första försöket.`;
+  $("summaryScore").textContent = `${hits} av ${session.total}`;
   const ul = $("summaryList"); ul.textContent = "";
   session.all.forEach(i => {
     const li = document.createElement("li");
     li.className = i.firstTry ? "hit" : "miss";
-    li.textContent = i.firstTry
-      ? `✓ ${question(i.word)} – ${answerOf(i.word)}`
-      : `✗ ${question(i.word)} – rätt svar: ${answerOf(i.word)}`;
+    const mark = document.createElement("span");
+    mark.className = "mark"; mark.textContent = i.firstTry ? "✓" : "✗";
+    const text = document.createElement("span");
+    text.textContent = `${question(i.word)} – `;
+    const right = document.createElement("span");
+    right.className = "right";
+    right.textContent = i.firstTry ? answerOf(i.word) : `rätt svar: ${answerOf(i.word)}`;
+    text.appendChild(right);
+    li.append(mark, text);
     ul.appendChild(li);
   });
   session.missed = session.all.filter(i => !i.firstTry).map(i => i.word);
@@ -389,6 +511,7 @@ function finish() {
 }
 $("btnRetryMissed").onclick = () => startSession(session.missed, direction);
 $("btnNewSession").onclick = () => show("mode");
+$("btnHome").onclick = () => show("home");
 
 loadLists().then(() => show("home"));
 </script>

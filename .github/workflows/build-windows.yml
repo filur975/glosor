@@ -14,7 +14,19 @@ jobs:
       - run: pip install -r requirements.txt pyinstaller
       - run: python -m unittest
       - run: pyinstaller --onefile --name Glosor --add-data "static;static" app.py
+      - run: pyinstaller --onefile --windowed --name GlosorApp glosor_tk.py
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress }
+          $version = if ($env:GITHUB_REF_TYPE -eq "tag") { $env:GITHUB_REF_NAME.TrimStart("v") } else { "1.0" }
+          & $iscc "/DAppVersion=$version" installer.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
         with:
           name: Glosor-windows
-          path: dist/Glosor.exe
+          path: |
+            dist/Glosor.exe
+            dist/GlosorApp.exe
+            dist/GlosorSetup.exe
