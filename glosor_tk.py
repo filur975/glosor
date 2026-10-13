@@ -107,28 +107,34 @@ def palette(dark):
     return c
 
 
-def rounded_image(master, r, fill, bg, border=None, bw=1):
-    """A small anti-aliased rounded rectangle; ttk stretches its middle to fit the widget."""
-    n = 2 * r + 2
-    img = tk.PhotoImage(master=master, width=n, height=n)
+def rounded_image(master, r, fill, bg, border=None, bw=1, width=None, height=None):
+    """An anti-aliased rounded rectangle. Flat areas are filled in one go; only the corners are
+    computed pixel by pixel."""
+    w, h = width or 2 * r + 2, height or 2 * r + 2
+    bw = round(bw)
+    img = tk.PhotoImage(master=master, width=w, height=h)
+    img.put(border or fill, to=(0, 0, w, h))
+    if border:
+        img.put(fill, to=(bw, bw, w - bw, h - bw))
 
     def distance(x, y, inset):
-        half, radius = n / 2 - inset, max(r - inset, 0)
-        qx, qy = abs(x - n / 2) - (half - radius), abs(y - n / 2) - (half - radius)
+        radius = max(r - inset, 0)
+        qx = abs(x - w / 2) - (w / 2 - inset - radius)
+        qy = abs(y - h / 2) - (h / 2 - inset - radius)
         return math.hypot(max(qx, 0), max(qy, 0)) + min(max(qx, qy), 0) - radius
 
-    rows = []
-    for y in range(n):
-        row = []
-        for x in range(n):
-            outer = min(max(0.5 - distance(x + 0.5, y + 0.5, 0), 0), 1)
-            if border:
-                inner = min(max(0.5 - distance(x + 0.5, y + 0.5, bw), 0), 1)
-                row.append(mix(mix(bg, border, outer), fill, inner))
-            else:
-                row.append(mix(bg, fill, outer))
-        rows.append("{" + " ".join(row) + "}")
-    img.put(" ".join(rows))
+    k = r + 1  # corner squares
+    for x0 in (0, w - k):
+        for y in list(range(k)) + list(range(h - k, h)):
+            row = []
+            for x in range(x0, x0 + k):
+                outer = min(max(0.5 - distance(x + 0.5, y + 0.5, 0), 0), 1)
+                if border:
+                    inner = min(max(0.5 - distance(x + 0.5, y + 0.5, bw), 0), 1)
+                    row.append(mix(mix(bg, border, outer), fill, inner))
+                else:
+                    row.append(mix(bg, fill, outer))
+            img.put("{" + " ".join(row) + "}", to=(x0, y))
     return img
 
 
@@ -896,7 +902,10 @@ class GlosorApp(tk.Tk):
         self.images = []
 
         def image(r, fill, border=None, bw=1):
-            img = rounded_image(self, r, fill, card, border, bw)
+            # ttk tiles the middle of the image; a 256x96 middle keeps that to a few copies per widget,
+            # which matters on Windows where every copy is a slow drawing call. (The elements get a small
+            # minimum size, so the image size doesn't make widgets bigger.)
+            img = rounded_image(self, r, fill, card, border, bw, width=2 * r + 256, height=2 * r + 96)
             self.images.append(img)  # Tk images vanish when Python drops the last reference
             return img
 
@@ -906,7 +915,7 @@ class GlosorApp(tk.Tk):
             focus = image(r, bg, ring or c["accent_fill"], max(2, px(2)))  # keyboard focus: a ring, not dots
             st.element_create(f"{name}.bg", "image", image(r, bg), ("disabled", image(r, disabled_bg)),
                               ("pressed", image(r, press)), ("active", image(r, hover)), ("focus", focus),
-                              border=r, sticky="nsew")
+                              border=r, sticky="nsew", width=2 * r, height=2 * r)
             st.layout(name, [(f"{name}.bg", {"sticky": "nsew", "children": [
                 ("Button.padding", {"sticky": "nsew", "children": [("Button.label", {"sticky": "nsew"})]})]})])
             st.configure(name, background=bg, foreground=fg, font=self.fonts[font], anchor="center",
@@ -928,7 +937,7 @@ class GlosorApp(tk.Tk):
         r, f = px(10), c["fill"]
         st.element_create("Field.bg", "image", image(r, f, c["line"]),
                           ("invalid", image(r, f, c["danger"], px(2))), ("focus", image(r, f, c["accent_fill"], px(2))),
-                          border=r, sticky="nsew")
+                          border=r, sticky="nsew", width=2 * r, height=2 * r)
         st.layout("Field.TEntry", [("Field.bg", {"sticky": "nsew", "children": [
             ("Entry.padding", {"sticky": "nsew", "children": [("Entry.textarea", {"sticky": "nsew"})]})]})])
         st.configure("Field.TEntry", fieldbackground=f, background=f, foreground=c["ink"], insertcolor=c["ink"],
@@ -999,12 +1008,15 @@ class GlosorApp(tk.Tk):
 
     def slide_step(self):
         # Ease out from wherever the card is now, with no overshoot.
+        old = self.slide_dx
         self.slide_dx *= 0.72
         if abs(self.slide_dx) < 0.5:
             self.slide_dx, self.slide_job = 0.0, None
         else:
             self.slide_job = self.after(16, self.slide_step)
-        self.layout()
+        # Moving is much cheaper than a full layout, especially on Windows.
+        self.holder.move("card", self.slide_dx - old, 0)
+        self.holder.move(self.card_win, self.slide_dx - old, 0)
 
     def on_wheel(self, event):
         if self.current is not None and self.current.scroller is not None:
