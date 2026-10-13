@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glosor</title>
+<style>
+  :root {
+    --bg1:#fdf2e9; --bg2:#e8f0ff; --card:#ffffff; --ink:#1f2a44; --muted:#6b7694;
+    --accent:#5b5bf0; --accent2:#8b5cf6; --ok:#15a34a; --ok-bg:#e8f9ee;
+    --bad:#e2650f; --bad-bg:#fff1e6; --line:#dfe4f2; --shadow:0 10px 30px rgba(60,70,140,.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg1:#171a2e; --bg2:#1f1b3a; --card:#242a47; --ink:#eef1ff; --muted:#a3acd0;
+      --ok-bg:#16382a; --bad-bg:#3d2a1a; --line:#38406a; --shadow:0 10px 30px rgba(0,0,0,.35); }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; font-family:"Nunito","Segoe UI",system-ui,sans-serif; color:var(--ink);
+    background:linear-gradient(135deg,var(--bg1),var(--bg2)) fixed; }
+  main { max-width:660px; margin:0 auto; padding:28px 16px 48px; }
+  h1 { text-align:center; font-size:2.6rem; margin:0 0 20px; letter-spacing:.5px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2),#ec4899); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  h2 { margin:0 0 12px; }
+  .card { background:var(--card); border-radius:24px; padding:28px; box-shadow:var(--shadow); margin-bottom:18px;
+    animation:rise .35s ease-out; }
+  @keyframes rise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+  button { font:inherit; font-size:1.1rem; font-weight:700; padding:12px 22px; border:0; border-radius:14px; cursor:pointer;
+    color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent2)); margin:4px 6px 4px 0;
+    box-shadow:0 4px 12px rgba(91,91,240,.35); transition:transform .12s, box-shadow .12s, filter .12s; }
+  button:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 18px rgba(91,91,240,.4); }
+  button:active:not(:disabled) { transform:translateY(0); }
+  button:disabled { opacity:.45; cursor:not-allowed; box-shadow:none; }
+  button.secondary { background:var(--bg2); color:var(--ink); box-shadow:none; border:2px solid var(--line); }
+  button.danger { background:linear-gradient(135deg,#ef4444,#dc2626); box-shadow:0 4px 12px rgba(220,38,38,.3); }
+  button:focus-visible, input:focus-visible { outline:3px solid var(--accent2); outline-offset:2px; }
+  input[type=text], select { font:inherit; font-size:1.25rem; padding:12px 14px; border:2px solid var(--line); border-radius:14px;
+    width:100%; background:var(--card); color:var(--ink); transition:border-color .15s, box-shadow .15s; }
+  input[type=text]:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(91,91,240,.18); outline:none; }
+  label { font-weight:700; color:var(--muted); }
+  .word { font-size:3rem; text-align:center; margin:14px 0 22px; font-weight:800; padding:22px 12px;
+    border-radius:20px; background:linear-gradient(135deg,rgba(91,91,240,.10),rgba(236,72,153,.10)); }
+  .hint { text-align:center; color:var(--muted); font-weight:600; }
+  #answer { text-align:center; font-size:1.6rem; }
+  .feedback { min-height:3.4em; font-size:1.25rem; font-weight:700; text-align:center; margin:14px 0; padding:10px 14px; border-radius:14px; }
+  .feedback.ok { color:var(--ok); background:var(--ok-bg); animation:pop .35s ease-out; }
+  .feedback.bad { color:var(--bad); background:var(--bad-bg); animation:shake .4s ease-out; }
+  @keyframes pop { 0% { transform:scale(.9); } 60% { transform:scale(1.04); } 100% { transform:scale(1); } }
+  @keyframes shake { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-6px); } 50% { transform:translateX(6px); } 75% { transform:translateX(-3px); } }
+  .bar { background:var(--line); border-radius:99px; height:18px; overflow:hidden; margin-bottom:8px; }
+  .bar > div { background:linear-gradient(90deg,#34d399,var(--ok)); height:100%; width:0; border-radius:99px; transition:width .4s ease; }
+  table { width:100%; border-collapse:collapse; } td { padding:5px 4px; }
+  #summaryText { text-align:center; font-weight:800; }
+  #summary ul { list-style:none; padding:0; margin:16px 0; }
+  #summary li { padding:9px 14px; margin:6px 0; border-radius:12px; font-weight:600; }
+  li.miss { color:var(--bad); background:var(--bad-bg); } li.hit { color:var(--ok); background:var(--ok-bg); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; }
+  .row > * { flex:1; }
+  .choice { display:flex; align-items:center; gap:12px; font-size:1.15rem; font-weight:700; color:var(--ink); padding:12px 14px;
+    margin:8px 0; border:2px solid var(--line); border-radius:14px; cursor:pointer; transition:border-color .15s, background .15s; }
+  .choice:hover { border-color:var(--accent); }
+  .choice:has(input:checked) { border-color:var(--accent); background:rgba(91,91,240,.10); }
+  .choice input { width:1.4em; height:1.4em; accent-color:var(--accent); }
+  @media (max-width:480px) { .word { font-size:2.3rem; } h1 { font-size:2.1rem; } .card { padding:20px; } }
+  @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>📚 Glosor</h1>
+
+  <!-- Startsida -->
+  <section id="home" class="card">
+    <h2>Välj gloslista</h2>
+    <div class="hint" style="text-align:left">Bocka i flera listor för att öva på dem tillsammans.</div>
+    <div id="listChoices"></div>
+    <p>
+      <button id="btnPractice">Öva</button>
+      <button id="btnEdit" class="secondary">Redigera</button>
+      <button id="btnNew" class="secondary">Ny lista</button>
+    </p>
+  </section>
+
+  <!-- Redigera lista -->
+  <section id="edit" class="card" hidden>
+    <h2 id="editTitle">Redigera lista</h2>
+    <label>Namn på listan<input type="text" id="editName"></label>
+    <table><thead><tr><td><b>Svenska</b></td><td><b>Engelska</b></td><td></td></tr></thead>
+      <tbody id="editRows"></tbody></table>
+    <p>
+      <button id="btnAddRow" class="secondary">+ Lägg till ord</button>
+    </p>
+    <p>
+      <button id="btnSave">Spara</button>
+      <button id="btnCancelEdit" class="secondary">Avbryt</button>
+      <button id="btnDelete" class="danger">Ta bort lista</button>
+    </p>
+  </section>
+
+  <!-- Välj övning -->
+  <section id="mode" class="card" hidden>
+    <h2>Vad vill du öva?</h2>
+    <p>
+      <button id="btnSvEn">Svenska → Engelska</button>
+      <button id="btnEnSv">Engelska → Svenska</button>
+    </p>
+    <button id="btnModeBack" class="secondary">Tillbaka</button>
+  </section>
+
+  <!-- Övning -->
+  <section id="quiz" class="card" hidden>
+    <div class="bar"><div id="barFill"></div></div>
+    <div class="hint" id="progressText"></div>
+    <div class="hint" id="promptLabel"></div>
+    <div class="word" id="promptWord"></div>
+    <input type="text" id="answer" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="feedback" id="feedback"></div>
+    <div class="row">
+      <button id="btnCheck">Svara</button>
+      <button id="btnNext" hidden>Nästa</button>
+      <button id="btnReveal" class="secondary">Visa svar</button>
+    </div>
+    <button id="btnQuit" class="secondary">Avsluta</button>
+  </section>
+
+  <!-- Sammanfattning -->
+  <section id="summary" class="card" hidden>
+    <h2>Bra jobbat! 🎉</h2>
+    <p id="summaryText" style="font-size:1.3rem"></p>
+    <ul id="summaryList"></ul>
+    <button id="btnRetryMissed">Öva på missade ord</button>
+    <button id="btnNewSession" class="secondary">Ny övning</button>
+  </section>
+</main>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const screens = ["home", "edit", "mode", "quiz", "summary"];
+function show(name) { screens.forEach(s => $(s).hidden = s !== name); }
+
+let lists = [];
+let editing = null;      // list being edited (null = new)
+let currentWords = [];
+let direction = "sv-en"; // or "en-sv"
+let session = null;
+
+const CORRECT_MSGS = ["Bra jobbat! 🎉", "Rätt! Fortsätt så! 🌟", "Precis så! 👏", "Snyggt! 🚀", "Superbra! 😀"];
+const WRONG_MSGS = ["Nästan! Det är bra att du försöker 💪", "Inte riktigt, men du lär dig! 🌱", "Ingen fara, du klarar den nästa gång! 😊"];
+const REVEAL_MSGS = ["Här är svaret – du får se det igen strax 👀", "Bra att du kollar! Vi tar det igen senare 🙂"];
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts });
+  if (!res.ok) throw new Error("Fel " + res.status);
+  return res.status === 204 ? null : res.json();
+}
+
+async function loadLists(selectId) {
+  lists = await api("/api/lists");
+  const box = $("listChoices");
+  const prev = new Set(checkedLists().map(l => l.id));
+  if (selectId) { prev.clear(); prev.add(selectId); }
+  if (!selectId && !prev.size && lists.length) prev.add(lists[0].id);
+  box.textContent = "";
+  lists.forEach(l => {
+    const label = document.createElement("label");
+    label.className = "choice";
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.value = l.id; cb.checked = prev.has(l.id);
+    cb.onchange = updateHomeButtons;
+    label.append(cb, `${l.name} (${l.words.length} ord)`);
+    box.appendChild(label);
+  });
+  updateHomeButtons();
+}
+function checkedLists() {
+  const ids = [...document.querySelectorAll("#listChoices input:checked")].map(i => i.value);
+  return lists.filter(l => ids.includes(l.id));
+}
+function updateHomeButtons() {
+  const n = checkedLists().length;
+  $("btnPractice").disabled = n < 1;
+  $("btnEdit").disabled = n !== 1;
+  $("btnEdit").title = n > 1 ? "Välj bara en lista för att redigera" : "";
+}
+
+// ---------- Redigera ----------
+function addRow(sv = "", en = "") {
+  const tr = document.createElement("tr");
+  for (const v of [sv, en]) {
+    const td = document.createElement("td");
+    const inp = document.createElement("input");
+    inp.type = "text"; inp.value = v;
+    td.appendChild(inp); tr.appendChild(td);
+  }
+  const td = document.createElement("td");
+  const del = document.createElement("button");
+  del.className = "secondary"; del.textContent = "✕"; del.title = "Ta bort ord";
+  del.onclick = () => tr.remove();
+  td.appendChild(del); tr.appendChild(td);
+  $("editRows").appendChild(tr);
+  return tr;
+}
+function openEdit(list) {
+  editing = list;
+  $("editTitle").textContent = list ? "Redigera lista" : "Ny lista";
+  $("editName").value = list ? list.name : "";
+  $("editRows").textContent = "";
+  (list ? list.words : [{}, {}, {}]).forEach(w => addRow(w.sv, w.en));
+  $("btnDelete").hidden = !list;
+  show("edit");
+}
+$("btnAddRow").onclick = () => addRow().querySelector("input").focus();
+$("btnNew").onclick = () => openEdit(null);
+$("btnEdit").onclick = () => openEdit(checkedLists()[0]);
+$("btnCancelEdit").onclick = () => show("home");
+$("btnSave").onclick = async () => {
+  const name = $("editName").value.trim();
+  if (!name) { $("editName").focus(); return; }
+  const words = [...$("editRows").querySelectorAll("tr")].map(tr => {
+    const [sv, en] = tr.querySelectorAll("input");
+    return { sv: sv.value, en: en.value };
+  });
+  const body = JSON.stringify({ name, words });
+  const saved = editing
+    ? await api("/api/lists/" + editing.id, { method: "PUT", body })
+    : await api("/api/lists", { method: "POST", body });
+  await loadLists(saved.id);
+  show("home");
+};
+let deleteArmed = false;
+$("btnDelete").onclick = async () => {
+  if (!deleteArmed) {
+    deleteArmed = true; $("btnDelete").textContent = "Är du säker? Klicka igen";
+    setTimeout(() => { deleteArmed = false; $("btnDelete").textContent = "Ta bort lista"; }, 4000);
+    return;
+  }
+  deleteArmed = false; $("btnDelete").textContent = "Ta bort lista";
+  await api("/api/lists/" + editing.id, { method: "DELETE" });
+  await loadLists();
+  show("home");
+};
+
+// ---------- Övning ----------
+$("btnPractice").onclick = () => {
+  const chosen = checkedLists();
+  // Combine the chosen lists; identical word pairs are only asked once.
+  const seen = new Set();
+  currentWords = [];
+  chosen.forEach(l => l.words.forEach(w => {
+    const key = w.sv + "\u0000" + w.en;
+    if (seen.has(key)) return;
+    seen.add(key);
+    currentWords.push({ ...w, listId: l.id });
+  }));
+  if (!currentWords.length) {
+    if (chosen.length === 1) openEdit(chosen[0]);
+    return;
+  }
+  show("mode");
+};
+$("btnModeBack").onclick = () => show("home");
+$("btnSvEn").onclick = () => startSession(currentWords, "sv-en");
+$("btnEnSv").onclick = () => startSession(currentWords, "en-sv");
+
+function shuffle(a) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startSession(words, dir) {
+  direction = dir;
+  session = {
+    queue: shuffle(words.map(w => ({ word: w, firstTry: null }))),
+    all: [], total: words.length, mastered: 0, current: null, answered: false,
+  };
+  session.all = session.queue.slice();
+  show("quiz");
+  nextWord();
+}
+
+const question = w => direction === "sv-en" ? w.sv : w.en;
+const answerOf = w => direction === "sv-en" ? w.en : w.sv;
+
+function normalize(s) { return s.trim().toLowerCase().replace(/\s+/g, " "); }
+function isCorrect(input, expected) {
+  const given = normalize(input);
+  if (!given) return false;
+  const options = expected.split("/").map(normalize);
+  return normalize(expected) === given || options.includes(given);
+}
+
+function updateProgress() {
+  $("barFill").style.width = (100 * session.mastered / session.total) + "%";
+  $("progressText").textContent = `${session.mastered} av ${session.total} ord klara`;
+}
+
+function nextWord() {
+  if (!session.queue.length) { finish(); return; }
+  session.current = session.queue[0];
+  session.answered = false;
+  $("promptLabel").textContent = direction === "sv-en" ? "Vad heter detta på engelska?" : "Vad heter detta på svenska?";
+  $("promptWord").textContent = question(session.current.word);
+  $("answer").value = ""; $("answer").disabled = false;
+  $("feedback").textContent = ""; $("feedback").className = "feedback";
+  $("btnCheck").hidden = false; $("btnReveal").hidden = false; $("btnNext").hidden = true;
+  updateProgress();
+  $("answer").focus();
+}
+
+function requeue(item) {
+  session.queue.shift();
+  const pos = Math.min(session.queue.length, 3);
+  session.queue.splice(pos, 0, item);
+}
+
+function firstAttempt(item, ok) {
+  if (item.firstTry !== null) return;
+  item.firstTry = ok;
+  api(`/api/lists/${item.word.listId}/result`, {
+    method: "POST", body: JSON.stringify({ sv: item.word.sv, en: item.word.en, correct: ok }),
+  }).catch(() => {});
+}
+
+function check() {
+  const s = session;
+  if (s.answered) { nextWord(); return; }
+  const item = s.current;
+  if (!$("answer").value.trim()) return;
+  if (isCorrect($("answer").value, answerOf(item.word))) {
+    firstAttempt(item, true);
+    s.queue.shift(); s.mastered++;
+    $("feedback").className = "feedback ok";
+    $("feedback").textContent = pick(CORRECT_MSGS);
+  } else {
+    firstAttempt(item, false);
+    requeue(item);
+    $("feedback").className = "feedback bad";
+    $("feedback").textContent = `${pick(WRONG_MSGS)} Rätt stavning: ${answerOf(item.word)}`;
+  }
+  afterAnswer();
+}
+
+function reveal() {
+  const item = session.current;
+  if (session.answered) return;
+  firstAttempt(item, false);
+  requeue(item);
+  $("feedback").className = "feedback bad";
+  $("feedback").textContent = `${pick(REVEAL_MSGS)} Svar: ${answerOf(item.word)}`;
+  afterAnswer();
+}
+
+function afterAnswer() {
+  session.answered = true;
+  $("answer").disabled = true;
+  $("btnCheck").hidden = true; $("btnReveal").hidden = true; $("btnNext").hidden = false;
+  $("btnNext").focus();
+  updateProgress();
+}
+
+$("btnCheck").onclick = check;
+$("btnReveal").onclick = reveal;
+$("btnNext").onclick = nextWord;
+$("btnQuit").onclick = () => show("home");
+$("answer").addEventListener("keydown", e => { if (e.key === "Enter") check(); });
+
+// ---------- Sammanfattning ----------
+function finish() {
+  const hits = session.all.filter(i => i.firstTry).length;
+  $("summaryText").textContent = `Du hade ${hits} av ${session.total} rätt på första försöket.`;
+  const ul = $("summaryList"); ul.textContent = "";
+  session.all.forEach(i => {
+    const li = document.createElement("li");
+    li.className = i.firstTry ? "hit" : "miss";
+    li.textContent = i.firstTry
+      ? `✓ ${question(i.word)} – ${answerOf(i.word)}`
+      : `✗ ${question(i.word)} – rätt svar: ${answerOf(i.word)}`;
+    ul.appendChild(li);
+  });
+  session.missed = session.all.filter(i => !i.firstTry).map(i => i.word);
+  $("btnRetryMissed").hidden = session.missed.length === 0;
+  show("summary");
+}
+$("btnRetryMissed").onclick = () => startSession(session.missed, direction);
+$("btnNewSession").onclick = () => show("mode");
+
+loadLists().then(() => show("home"));
+</script>
+</body>
+</html>
