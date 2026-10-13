@@ -3,14 +3,28 @@ import json
 import os
 import re
 import shutil
+import socket
+import sys
 import tempfile
 import threading
 import uuid
+import webbrowser
 
 from flask import Flask, abort, jsonify, request, send_from_directory
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_FILE = os.path.join(BASE_DIR, "data", "lists.json")
+FROZEN = getattr(sys, "frozen", False)  # True when running as a PyInstaller .exe
+BASE_DIR = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+
+
+def _data_file():
+    if not FROZEN:
+        return os.path.join(BASE_DIR, "data", "lists.json")
+    # Packaged app: keep word lists in the user's profile so they survive updates.
+    root = os.environ.get("APPDATA") or os.path.join(os.path.expanduser("~"), ".local", "share")
+    return os.path.join(root, "Glosor", "lists.json")
+
+
+DATA_FILE = _data_file()
 
 app = Flask(__name__, static_folder=os.path.join(BASE_DIR, "static"), static_url_path="/static")
 _lock = threading.Lock()
@@ -159,6 +173,20 @@ def record_result(list_id):
     abort(404)
 
 
+def free_port(preferred):
+    for port in range(preferred, preferred + 20):
+        with socket.socket() as s:
+            if s.connect_ex(("127.0.0.1", port)) != 0:
+                return port
+    return preferred
+
+
 if __name__ == "__main__":
     load_data()  # create example data on first run
-    app.run(host="127.0.0.1", port=int(os.environ.get("PORT", 8000)))
+    port = free_port(int(os.environ.get("PORT", 8000)))
+    url = f"http://127.0.0.1:{port}"
+    if FROZEN or os.environ.get("GLOSOR_OPEN_BROWSER"):
+        threading.Timer(1.0, lambda: webbrowser.open(url)).start()
+    print(f"Glosor körs på {url}")
+    print("Stäng det här fönstret för att avsluta.")
+    app.run(host="127.0.0.1", port=port)
