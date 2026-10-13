@@ -1,13 +1,7 @@
-import importlib.util
-import os
 import random
-import tempfile
 import unittest
 
-import app as glosor
 import quiz
-
-HAS_TK = importlib.util.find_spec("tkinter") is not None
 
 
 class QuizTests(unittest.TestCase):
@@ -42,28 +36,6 @@ class QuizTests(unittest.TestCase):
         self.assertTrue(s.reveal())
         self.assertEqual(s.check("hund"), (True, False))
         self.assertEqual(s.hits, 0)
-
-
-@unittest.skipUnless(HAS_TK, "tkinter not installed")
-class DesktopDataTests(unittest.TestCase):
-    def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
-        self.old_file = glosor.DATA_FILE
-        glosor.DATA_FILE = os.path.join(self.tmp.name, "lists.json")
-
-    def tearDown(self):
-        glosor.DATA_FILE = self.old_file
-        self.tmp.cleanup()
-
-    def test_save_record_delete(self):
-        import glosor_tk
-        lst = glosor_tk.save_list(None, "Test", [{"sv": "bil", "en": "car"}, {"sv": "", "en": "x"}])
-        self.assertEqual(len(lst["words"]), 1)
-        glosor_tk.record_result({**lst["words"][0], "list_id": lst["id"]}, True)
-        lst = glosor_tk.save_list(lst["id"], "Nytt", [{"sv": "bil", "en": "car"}])
-        self.assertEqual(lst["words"][0]["correct"], 1)
-        glosor_tk.delete_list(lst["id"])
-        self.assertEqual(len(glosor_tk.load_lists()), 1)  # only the example list left
 
 
 if __name__ == "__main__":

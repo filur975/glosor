@@ -1,4 +1,4 @@
-"""Quiz logic for the desktop app (mirrors the JavaScript in static/index.html)."""
+"""Quiz logic for Glosor, kept separate from the GUI so it can be tested."""
 import random
 import re
 

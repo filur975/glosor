@@ -11,10 +11,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -r requirements.txt pyinstaller
+      - run: pip install pyinstaller
       - run: python -m unittest
-      - run: pyinstaller --onefile --name Glosor --add-data "static;static" app.py
-      - run: pyinstaller --onefile --windowed --name GlosorApp glosor_tk.py
+      - run: pyinstaller --onefile --windowed --name Glosor glosor_tk.py
       - name: Build installer
         shell: pwsh
         run: |
@@ -28,5 +27,4 @@ jobs:
           name: Glosor-windows
           path: |
             dist/Glosor.exe
-            dist/GlosorApp.exe
             dist/GlosorSetup.exe

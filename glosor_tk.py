@@ -1,4 +1,4 @@
-"""Glosor as a desktop app (Tkinter). Uses the same word lists as the web version."""
+"""Glosor: a vocabulary trainer for Swedish and English, as a desktop app (Tkinter)."""
 import math
 import random
 import sys
@@ -7,10 +7,10 @@ import uuid
 from tkinter import font as tkfont
 from tkinter import messagebox, ttk
 
-import app as store
 import quiz
+import store
 
-# Same palette as the web version: grouped background, solid cards, one accent.
+# Apple-style palette: grouped background, solid cards, one accent.
 LIGHT = dict(bg="#f2f2f7", card="#ffffff", fill="#f2f2f7", ink="#1c1c1e", muted="#6e6e73", line="#e5e5ea",
              accent="#5856d6", accent_fill="#5856d6", on_accent="#ffffff",
              ok="#248a3d", ok_bg="#e3f6e8", bad="#c93400", bad_bg="#fff0e5", danger="#d70015")

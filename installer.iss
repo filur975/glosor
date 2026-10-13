@@ -1,4 +1,4 @@
-; Inno Setup script for the Glosor desktop app. Build GlosorApp.exe with PyInstaller first,
+; Inno Setup script for the Glosor desktop app. Build Glosor.exe with PyInstaller first,
 ; then run: iscc installer.iss   (output: dist\GlosorSetup.exe)
 
 #ifndef AppVersion
@@ -18,7 +18,7 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 OutputDir=dist
 OutputBaseFilename=GlosorSetup
-UninstallDisplayIcon={app}\GlosorApp.exe
+UninstallDisplayIcon={app}\Glosor.exe
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -27,11 +27,11 @@ WizardStyle=modern
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
-Source: "dist\GlosorApp.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\Glosor.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\Glosor"; Filename: "{app}\GlosorApp.exe"
-Name: "{autodesktop}\Glosor"; Filename: "{app}\GlosorApp.exe"; Tasks: desktopicon
+Name: "{group}\Glosor"; Filename: "{app}\Glosor.exe"
+Name: "{autodesktop}\Glosor"; Filename: "{app}\Glosor.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\GlosorApp.exe"; Description: "{cm:LaunchProgram,Glosor}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Glosor.exe"; Description: "{cm:LaunchProgram,Glosor}"; Flags: nowait postinstall skipifsilent
