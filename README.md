@@ -15,10 +15,37 @@ python3 glosor_tk.py
 Word lists are stored in `data/lists.json` (created on first run with an example list)
 and can be edited in the app.
 
+## Web app (phones, tablets, any computer)
+
+`web/` holds the same app as an installable web app (PWA) that also works offline.
+It is plain HTML/CSS/JavaScript with no build step.
+
+Try it locally:
+
+```
+cd web && python3 -m http.server 8000
+```
+
+then open http://localhost:8000.
+
+The workflow "Publish web app" publishes `web/` to GitHub Pages on every push to `master` that
+changes it. Turn it on once under Settings → Pages → Source: "GitHub Actions". The app is then at
+`https://<user>.github.io/glosor/`. To install it, open that address and choose
+"Lägg till på hemskärmen" (Safari: Share button) or "Installera" (Chrome/Edge).
+
+The word lists everyone gets are in `web/glosor.json`. Edit that file and push: the app fetches it
+each time it starts, so everyone gets the new words, and each device keeps its own progress
+on them. These shared lists can't be edited in the app.
+
+People can also add their own lists with "Ny lista" or "Importera listor". These are kept in the
+browser on that device until they are deleted. "Exportera listor" saves them to a file, to
+move them to another device. The file has the same format as the desktop app's `lists.json`.
+
 ## Tests
 
 ```
 python3 -m unittest
+node --test web/test/    # web app
 ```
 
 ## Windows installer

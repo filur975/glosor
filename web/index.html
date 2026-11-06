@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Glosor</title>
+  <meta name="description" content="Öva engelska glosor.">
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Glosor">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main class="card" id="card">
+    <!-- Lists -->
+    <section class="screen" id="home" data-depth="0" hidden>
+      <h2>Gloslistor</h2>
+      <p class="muted">Bocka i en eller flera listor att öva på.</p>
+      <ul class="choices" id="choices" role="listbox" aria-multiselectable="true" aria-label="Gloslistor"></ul>
+      <div class="row">
+        <button class="accent" id="btn-practice">Öva</button>
+        <button class="tinted" id="btn-edit">Redigera</button>
+        <span class="spacer"></span>
+        <button class="tinted" id="btn-new">+ Ny lista</button>
+      </div>
+      <div class="row files">
+        <button class="link" id="btn-export">Exportera listor</button>
+        <button class="link" id="btn-import">Importera listor</button>
+        <input type="file" id="import-file" accept=".json,application/json" hidden>
+      </div>
+      <p class="toast" id="toast" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- Edit a list -->
+    <section class="screen" id="edit" data-depth="1" hidden>
+      <h2 id="edit-title">Redigera lista</h2>
+      <p class="muted">Tomma rader hoppas över när du sparar.</p>
+      <label class="caption" for="list-name">Namn på listan</label>
+      <input class="field" id="list-name" maxlength="80" autocomplete="off">
+      <p class="error" id="name-error" hidden>Ge listan ett namn.</p>
+      <div class="words-head"><span class="caption">Svenska</span><span class="caption">Engelska</span></div>
+      <div class="words" id="words"></div>
+      <button class="tinted" id="btn-add-word">+ Lägg till ord</button>
+      <div class="row">
+        <button class="accent" id="btn-save">Spara</button>
+        <button class="tinted" id="btn-cancel">Avbryt</button>
+        <span class="spacer"></span>
+        <button class="danger" id="btn-delete">Ta bort lista</button>
+      </div>
+    </section>
+
+    <!-- Choose direction -->
+    <section class="screen" id="mode" data-depth="1" hidden>
+      <h2>Vad vill du öva?</h2>
+      <p class="muted">Välj åt vilket håll du vill översätta.</p>
+      <div class="grid2">
+        <button class="accent" data-direction="sv-en">Svenska → Engelska</button>
+        <button class="accent" data-direction="en-sv">Engelska → Svenska</button>
+      </div>
+      <div class="row"><button class="tinted" data-go="home">Tillbaka</button></div>
+    </section>
+
+    <!-- Quiz -->
+    <section class="screen" id="quiz" data-depth="2" hidden>
+      <div class="progress"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="quiz-top">
+        <span class="small" id="progress-text"></span>
+        <button class="link" data-go="home">Avsluta</button>
+      </div>
+      <p class="muted center" id="prompt"></p>
+      <p class="word" id="word" lang=""></p>
+      <form id="answer-form" autocomplete="off">
+        <input class="field big" id="answer" autocapitalize="off" autocorrect="off" spellcheck="false"
+               enterkeyhint="go" aria-labelledby="prompt">
+        <div class="feedback" id="feedback" aria-live="polite"></div>
+        <div class="grid2" id="answer-buttons">
+          <button class="accent" type="submit">Svara</button>
+          <button class="tinted" type="button" id="btn-reveal">Visa svar</button>
+        </div>
+        <button class="accent wide" type="button" id="btn-next" hidden>Nästa →</button>
+      </form>
+    </section>
+
+    <!-- Summary -->
+    <section class="screen" id="summary" data-depth="3" hidden>
+      <h2 class="center">Bra jobbat!</h2>
+      <p class="score" id="score"></p>
+      <p class="muted center">rätt på första försöket</p>
+      <ul class="results" id="results"></ul>
+      <div class="grid2" id="summary-buttons">
+        <button class="accent" id="btn-retry">Öva på missade ord</button>
+        <button class="tinted" id="btn-again">Öva igen</button>
+      </div>
+      <div class="row"><button class="tinted" data-go="home">Tillbaka till listorna</button></div>
+    </section>
+  </main>
+</body>
+</html>
