@@ -304,7 +304,7 @@ const quizScreen = {
     $("answer").readOnly = false;
     $("answer").value = "";
     this.feedback();
-    $("answer-buttons").hidden = false;
+    $("btn-check").hidden = false;
     $("btn-next").hidden = true;
     this.updateProgress();
     $("answer").focus();
@@ -333,19 +333,12 @@ const quizScreen = {
     }
   },
 
-  reveal() {
-    if (this.answered) return;
-    const s = this.session, word = s.current.word;
-    if (s.reveal()) store.recordResult(word, false);
-    this.afterAnswer("bad", pick(quiz.REVEAL_MSGS), `Svar: ${s.answerOf(word)}`);
-  },
-
   afterAnswer(kind, message, answer = "") {
     this.answered = true;
     this.feedback(kind, message, answer);
     // Read-only rather than disabled, so the phone keyboard stays up and Enter goes to the next word.
     $("answer").readOnly = true;
-    $("answer-buttons").hidden = true;
+    $("btn-check").hidden = true;
     $("btn-next").hidden = false;
     if (!matchMedia("(pointer: coarse)").matches) $("btn-next").focus();
     this.updateProgress();
@@ -375,7 +368,6 @@ $("answer-form").addEventListener("submit", e => {
   e.preventDefault();
   quizScreen.check();
 });
-$("btn-reveal").addEventListener("click", () => quizScreen.reveal());
 $("btn-next").addEventListener("click", () => quizScreen.next());
 
 // ---------- Summary ----------
